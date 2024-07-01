@@ -21,36 +21,45 @@ public class OnBoardingViaMobile implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        context.getAuthenticationSession().setAuthNote("FLOW_TYPE", REGISTER_FLOW);
+        logger.info("Entering in onboard authenticate.");
         boolean isRememberMeEnabled = context.getRealm().isRememberMe();
-        context.form().setAttribute("isRememberMeAllowed", isRememberMeEnabled);
-        context.form().setAttribute("login", context.getAuthenticationSession().getAuthenticatedUser());
+        context.form().setAttribute(IS_REMEMBER_ME_ALLOWED, isRememberMeEnabled);
+        context.form().setAttribute(LOGIN_FLOW, context.getAuthenticationSession().getAuthenticatedUser());
         context.challenge(context.form().createForm(REGISTER_PAGE));
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
+        logger.info("Entering in onboarding action.");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
-        String password = formParams.getFirst("password");
-        String confirmPassword = formParams.getFirst("confirmPassword");
+        String password = formParams.getFirst(PASSWORD);
+        String confirmPassword = formParams.getFirst(CONFIRM_PASSWORD);
 
         if (isFormIncomplete(mobileNumber, password, confirmPassword)) {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Fill all the fields.", REGISTER_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, REQUIRED_FIELDS, REGISTER_PAGE);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Entered password doesn't match confirm password!", REGISTER_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, NO_MATCHING_PASSWORD, REGISTER_PAGE);
             return;
         }
 
         if (findUser(context.getSession(), context.getRealm(), mobileNumber) != null) {
-            showError(context, AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR, "Mobile number already exists!", REGISTER_PAGE);
+            showError(context, AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR, USER_EXISTS, REGISTER_PAGE);
             return;
         }
 
-        processOTP(context, mobileNumber, password);
+        try {
+            logger.info("Executing onboard success.");
+            storeTemporaryUserData(context, mobileNumber, password);
+            context.success();
+        }catch (Exception e){
+            logger.error("Failed to create user", e);
+            showError(context, AuthenticationFlowError.INTERNAL_ERROR, INTERNAL_ERROR, REGISTER_PAGE);
+        }
+
     }
 
     private boolean isFormIncomplete(String mobileNumber, String password, String confirmPassword) {
@@ -59,28 +68,9 @@ public class OnBoardingViaMobile implements Authenticator {
                 confirmPassword == null || confirmPassword.isEmpty();
     }
 
-    private void processOTP(AuthenticationFlowContext context, String mobileNumber, String password) {
-        try {
-            String generatedOtp = OtpUtils.generateOTP(6);
-            boolean otpSent = OtpUtils.sendOTP(mobileNumber, generatedOtp, context, REGISTER_PAGE);
-            if (otpSent) {
-                storeTemporaryUserData(context, mobileNumber, password, generatedOtp);
-                context.challenge(context.form().setSuccess("OTP sent successfully").createForm(VERIFY_OTP_PAGE));
-                context.success();
-            } else {
-                showError(context, AuthenticationFlowError.INTERNAL_ERROR, "Internal Server Error, OTP sent failed.", REGISTER_PAGE);
-            }
-        } catch (Exception e) {
-            logger.error("Failed to create user", e);
-            showError(context, AuthenticationFlowError.INTERNAL_ERROR, "Internal server error", REGISTER_PAGE);
-        }
-    }
-
-    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, String password, String generatedOtp) {
-        context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, generatedOtp);
-        context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
-        context.getAuthenticationSession().setAuthNote("TEMP_USER_NAME", mobileNumber);
-        context.getAuthenticationSession().setAuthNote("TEMP_PASSWORD", password);
+    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, String password) {
+        context.getAuthenticationSession().setAuthNote(TEMP_USER_NAME, mobileNumber);
+        context.getAuthenticationSession().setAuthNote(TEMP_PASSWORD, password);
     }
 
     @Override

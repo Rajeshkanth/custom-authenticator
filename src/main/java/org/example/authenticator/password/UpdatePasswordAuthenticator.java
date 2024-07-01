@@ -14,30 +14,32 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
-import static org.example.authenticator.utils.Constants.UPDATE_PASSWORD_PAGE;
+import static org.example.authenticator.utils.Constants.*;
 
 public class UpdatePasswordAuthenticator implements Authenticator {
 
     private static final Logger logger = LoggerFactory.getLogger(UpdatePasswordAuthenticator.class);
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        context.challenge(context.form().createForm("update-password.ftl"));
+        logger.info("Entered in Update password authenticate part.");
+        context.challenge(context.form().createForm(UPDATE_PASSWORD_PAGE));
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
+        logger.info("Entered in Update password action part.");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
-        String password = formParams.getFirst("password");
-        String confirmPassword = formParams.getFirst("confirmPassword");
+        String password = formParams.getFirst(PASSWORD);
+        String confirmPassword = formParams.getFirst(CONFIRM_PASSWORD);
         UserModel user = context.getUser();
 
         if (!password.equals(confirmPassword)) {
-            context.challenge(context.form().setError("Password doesn't matches with confirm password!").createForm(UPDATE_PASSWORD_PAGE));
+            context.challenge(context.form().setError(NO_MATCHING_PASSWORD).createForm(UPDATE_PASSWORD_PAGE));
             return;
         }
 
         user.credentialManager().updateCredential(UserCredentialModel.password(password, false));
-        user.setSingleAttribute("passwordLastChanged", LocalDate.now().toString());
+        user.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
         context.success();
     }
 

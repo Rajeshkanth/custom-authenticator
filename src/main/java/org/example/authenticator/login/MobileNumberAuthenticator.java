@@ -31,12 +31,12 @@ public class MobileNumberAuthenticator implements Authenticator {
     public void action(AuthenticationFlowContext context) {
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
-        String password = formParams.getFirst("password");
+        String password = formParams.getFirst(PASSWORD);
 
         if (isValidInput(mobileNumber, password)) {
             handleLoginForm(context, mobileNumber, password);
         } else {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Mobile number and password required", LOGIN_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, REQUIRED_FIELDS, LOGIN_PAGE);
         }
     }
 
@@ -47,49 +47,15 @@ public class MobileNumberAuthenticator implements Authenticator {
     private void handleLoginForm(AuthenticationFlowContext context, String mobileNumber, String password) {
         UserModel user = findUser(context.getSession(), context.getRealm(), mobileNumber);
         if (user != null && validatePassword(context.getSession(), context.getRealm(), user, UserCredentialModel.password(password))) {
-            processValidLogin(context, mobileNumber, user);
-        } else {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Invalid credentials!", LOGIN_PAGE);
-        }
-    }
-
-    private void processValidLogin(AuthenticationFlowContext context, String mobileNumber, UserModel user) {
-        if (isSubFlowRequired(context)) {
-            handleOtpFlow(context, mobileNumber, user);
-        } else {
-            authenticateUser(context, user);
-        }
-    }
-
-    private void handleOtpFlow(AuthenticationFlowContext context, String mobileNumber, UserModel user) {
-        String generatedOtp = OtpUtils.generateOTP(6);
-        boolean otpSent = OtpUtils.sendOTP(mobileNumber, generatedOtp, context, LOGIN_PAGE);
-        if (otpSent) {
-            context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, generatedOtp);
-            context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
             authenticateUser(context, user);
         } else {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Internal error", LOGIN_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INVALID_CREDENTIALS, LOGIN_PAGE);
         }
     }
 
     private void authenticateUser(AuthenticationFlowContext context, UserModel user) {
         context.getAuthenticationSession().setAuthenticatedUser(user);
         context.success();
-    }
-
-    private boolean isSubFlowRequired(AuthenticationFlowContext context) {
-        String currentExecutionId = context.getExecution().getId();
-        AuthenticationExecutionModel currentExecution = context.getRealm().getAuthenticationExecutionById(currentExecutionId);
-        String parentFlowId = currentExecution.getParentFlow();
-        List<AuthenticationExecutionModel> executions = context.getRealm().getAuthenticationExecutionsStream(parentFlowId).collect(Collectors.toList());
-
-        for (AuthenticationExecutionModel execution : executions) {
-            if (execution.isAuthenticatorFlow() && execution.getRequirement() == AuthenticationExecutionModel.Requirement.REQUIRED) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean validatePassword(KeycloakSession session, RealmModel realm, UserModel user, CredentialInput password) {
