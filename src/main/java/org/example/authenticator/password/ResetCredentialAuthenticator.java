@@ -8,6 +8,8 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;
@@ -17,38 +19,27 @@ import static org.example.authenticator.utils.FindUser.findUser;
 // It is responsible for presenting the mobile number form page for getting otp to validate the number
 // and after successful auth update password form page will get presented.
 public class ResetCredentialAuthenticator implements Authenticator {
+    private static final Logger logger = LoggerFactory.getLogger(ResetCredentialAuthenticator.class);
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        context.getAuthenticationSession().setAuthNote("FLOW_TYPE", RESET_PASSWORD_FLOW);
+        logger.info("Entered in Reset credential authenticate.");
         context.challenge(context.form().createForm(FORGOT_PASSWORD_PAGE));
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
+        logger.info("Entered in Reset Credential action.");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
         UserModel existingUser = findUser(context.getSession(), context.getRealm(), mobileNumber);
 
         if (existingUser != null) {
-            String otp = OtpUtils.generateOTP(6);
-            boolean otpSent = OtpUtils.sendOTP(mobileNumber, otp, context, FORGOT_PASSWORD_PAGE);
-
-            if (otpSent) {
-                context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, otp);
-                context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
-                authenticateUser(context, existingUser);
-            } else {
-                showError(context, AuthenticationFlowError.INVALID_USER, "Failed to send OTP. Please try again.", FORGOT_PASSWORD_PAGE);
-            }
+            context.getAuthenticationSession().setAuthenticatedUser(existingUser);
+            context.success();
         } else {
-            showError(context, AuthenticationFlowError.INVALID_USER, "User not found.", FORGOT_PASSWORD_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_USER, USER_NOT_FOUND, FORGOT_PASSWORD_PAGE);
         }
-    }
-
-    private void authenticateUser(AuthenticationFlowContext context, UserModel user) {
-        context.getAuthenticationSession().setAuthenticatedUser(user);
-        context.success();
     }
 
     @Override

@@ -12,11 +12,13 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 import java.util.List;
 
 public class UpdatePasswordAuthenticatorFactory implements AuthenticatorFactory {
-    public static final String PROVIDER_ID = "update-password-authenticator";
+    private static final String PROVIDER_ID = "update-password-authenticator";
+    private static final String DISPLAY_TEXT = "Update Password Authenticator";
+    private static final String HELP_TEXT= "Displays a form to change the password after successful otp validation.";
 
     @Override
     public String getDisplayType() {
-        return "Update Password Authenticator";
+        return DISPLAY_TEXT;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class UpdatePasswordAuthenticatorFactory implements AuthenticatorFactory 
 
     @Override
     public String getHelpText() {
-        return "Displays a form to change the password after successful otp validation.";
+        return HELP_TEXT;
     }
 
     @Override

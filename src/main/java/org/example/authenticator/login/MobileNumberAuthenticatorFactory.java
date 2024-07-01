@@ -13,7 +13,9 @@ import java.util.List;
 
 public class MobileNumberAuthenticatorFactory implements AuthenticatorFactory {
 
-    public static final String PROVIDER_ID = "mobile-authenticator";
+    private static final String PROVIDER_ID = "mobile-authenticator";
+    private static final String DISPLAY_TEXT = "Login Form";
+    private static final String HELP_TEXT = "Validates a mobile number and password from login form.";
 
     @Override
     public Authenticator create(KeycloakSession session) {
@@ -42,7 +44,7 @@ public class MobileNumberAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public String getDisplayType() {
-        return "Login Form";
+        return DISPLAY_TEXT;
     }
 
     @Override
@@ -67,7 +69,7 @@ public class MobileNumberAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public String getHelpText() {
-        return "Validates a mobile number and password from login form.";
+        return HELP_TEXT;
     }
 
     @Override

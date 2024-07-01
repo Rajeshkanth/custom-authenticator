@@ -13,11 +13,13 @@ import java.util.List;
 
 public class ResetCredentialAuthenticatorFactory implements AuthenticatorFactory {
 
-    public static final String PROVIDER_ID = "reset-credential-authenticator";
+    private static final String PROVIDER_ID = "reset-credential-authenticator";
+    private static final String DISPLAY_TYPE = "Reset Credential Authenticator";
+    private static final String HELP_TEXT = "Displays a form to enter a mobile number and sends an OTP for password reset.";
 
     @Override
     public String getDisplayType() {
-        return "Reset Credential Authenticator";
+        return DISPLAY_TYPE;
     }
 
     @Override
@@ -42,7 +44,7 @@ public class ResetCredentialAuthenticatorFactory implements AuthenticatorFactory
 
     @Override
     public String getHelpText() {
-        return "Displays a form to enter a mobile number and sends an OTP for password reset.";
+        return HELP_TEXT;
     }
 
     @Override

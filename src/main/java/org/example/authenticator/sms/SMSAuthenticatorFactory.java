@@ -13,6 +13,9 @@ import java.util.List;
 
 public class SMSAuthenticatorFactory implements AuthenticatorFactory {
     public static final String PROVIDER_ID = "sms-form";
+    public static final String DISPLAY_NAME = "SMS Authenticator";
+    public static final String HELP_TEXT = "Authenticator for SMS functionalities";
+    public static final String OTP = "otp";
 
     @Override
     public Authenticator create(KeycloakSession session) {
@@ -41,17 +44,17 @@ public class SMSAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public String getDisplayType() {
-        return "SMS Authenticator";
+        return DISPLAY_NAME;
     }
 
     @Override
     public String getHelpText() {
-        return "Authenticator for SMS functionalities";
+        return HELP_TEXT;
     }
 
     @Override
     public String getReferenceCategory() {
-        return "OTP";
+        return OTP;
     }
 
     @Override

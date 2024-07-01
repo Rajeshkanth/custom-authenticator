@@ -9,6 +9,10 @@ import org.keycloak.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;
 
@@ -18,33 +22,90 @@ public class SMSAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+        logger.info("Entered in SMS authenticate.");
+        String mobileNumber = context.getUser() != null ? context.getUser().getUsername() : null;
+
+        if (mobileNumber != null) {
+            processOTP(context, mobileNumber, LOGIN_PAGE);
+        } else {
+            logger.info("OTP for registration");
+            String regMobileNumber = context.getAuthenticationSession().getAuthNote(TEMP_USER_NAME);
+            processOTP(context, regMobileNumber, REGISTER_PAGE);
+        }
+
         context.challenge(context.form().createForm(VERIFY_OTP_PAGE));
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
+        logger.info("Entered in SMS auth action.");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
-        String otp = formParams.getFirst("otp");
-        String resendOtp = formParams.getFirst("resend");
-        String flowType = context.getAuthenticationSession().getAuthNote("FLOW_TYPE");
+        String otp = formParams.getFirst(OTP_SESSION_ATTRIBUTE);
+        String resendOtp = formParams.getFirst(RESEND_OTP);
+        String flowType = determineFlowType(context);
+
+        logger.info("Flow type, {} ", flowType);
 
         switch (flowType) {
             case LOGIN_FLOW:
-                logger.debug("login flow is running");
+                logger.info("Login flow is running.");
                 handleOtpAction(context, otp, resendOtp, flowType, LOGIN_PAGE);
                 break;
             case REGISTER_FLOW:
-                logger.debug("register flow is running");
+                logger.info("Register flow is running.");
                 handleOtpAction(context, otp, resendOtp, flowType, REGISTER_PAGE);
                 break;
             case RESET_PASSWORD_FLOW:
-                logger.debug("reset password flow is running");
+                logger.info("Reset password flow is running.");
                 handleOtpAction(context, otp, resendOtp, flowType, FORGOT_PASSWORD_PAGE);
                 break;
             default:
-                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Invalid flow type", VERIFY_OTP_PAGE);
+                logger.info("Invalid flow.");
+                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INVALID_FLOW_TYPE, VERIFY_OTP_PAGE);
                 break;
         }
+    }
+
+    private void processOTP(AuthenticationFlowContext context, String mobileNumber, String form) {
+        try {
+            String generatedOtp = OtpUtils.generateOTP(6);
+            boolean isOtpSent = OtpUtils.sendOTP(mobileNumber, generatedOtp, context, form);
+            if (isOtpSent) {
+                logger.info("Otp sent.");
+                context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, generatedOtp);
+                context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
+            } else {
+                showError(context, AuthenticationFlowError.INTERNAL_ERROR, OTP_SEND_FAILED, form);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to create user", e);
+            showError(context, AuthenticationFlowError.INTERNAL_ERROR, INTERNAL_ERROR, form);
+        }
+    }
+
+    private String determineFlowType(AuthenticationFlowContext context) {
+        logger.info("Determining the flow type for SMS.");
+        String currentExecutionId = context.getExecution().getId();
+        AuthenticationExecutionModel currentExecution = context.getRealm().getAuthenticationExecutionById(currentExecutionId);
+
+        String parentFlowId = currentExecution.getParentFlow();
+        AuthenticationFlowModel parentFlow = context.getRealm().getAuthenticationFlowById(parentFlowId);
+        List<AuthenticationExecutionModel> executions = context.getRealm().getAuthenticationExecutionsStream(parentFlowId).collect(Collectors.toList());
+        logger.info(parentFlow.getProviderId());
+        for (AuthenticationExecutionModel execution : executions) {
+            switch (execution.getAuthenticator()) {
+                case "mobile-authenticator":
+                    return LOGIN_FLOW;
+                case "reset-credential-authenticator":
+                    return RESET_PASSWORD_FLOW;
+                case "registration using mobile number":
+                    return REGISTER_FLOW;
+                default:
+                    break;
+            }
+        }
+
+        return INVALID_FLOW_TYPE;
     }
 
     private void handleOtpAction(AuthenticationFlowContext context, String otp, String resend, String flowType, String form) {
@@ -52,10 +113,10 @@ public class SMSAuthenticator implements Authenticator {
             logger.debug("Resending otp for {}", flowType);
             handleOtpResend(context, form);
         } else if (otp != null) {
-            logger.debug("validating otp for {}", flowType);
+            logger.debug("Validating otp for {}", flowType);
             handleOtpValidation(context, flowType, otp);
         } else {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "OTP required!", VERIFY_OTP_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, OTP_REQUIRED, VERIFY_OTP_PAGE);
         }
     }
 
@@ -64,13 +125,15 @@ public class SMSAuthenticator implements Authenticator {
         String otpCreationTimeStr = context.getAuthenticationSession().getAuthNote(OTP_CREATION_TIME_ATTRIBUTE);
 
         if (sessionOtp == null || otpCreationTimeStr == null) {
+            logger.error(INVALID_OTP);
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INVALID_OTP, VERIFY_OTP_PAGE);
             return;
         }
 
         long otpCreationTime = Long.parseLong(otpCreationTimeStr);
         if (System.currentTimeMillis() - otpCreationTime > OTP_VALIDITY_DURATION) {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "OTP has expired. Please request a new OTP.", VERIFY_OTP_PAGE);
+            logger.error(OTP_EXPIRED);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, OTP_EXPIRED, VERIFY_OTP_PAGE);
             return;
         }
 
@@ -93,26 +156,27 @@ public class SMSAuthenticator implements Authenticator {
                 }
                 break;
             default:
-                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Invalid flow type!", LOGIN_PAGE);
+                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INVALID_FLOW_TYPE, LOGIN_PAGE);
                 break;
         }
 
     }
 
     private void createUserAndAuthenticate(AuthenticationFlowContext context) {
-        String userName = context.getAuthenticationSession().getAuthNote("TEMP_USER_NAME");
-        String password = context.getAuthenticationSession().getAuthNote("TEMP_PASSWORD");
+        String userName = context.getAuthenticationSession().getAuthNote(TEMP_USER_NAME);
+        String password = context.getAuthenticationSession().getAuthNote(TEMP_PASSWORD);
 
         try {
             UserModel newUser = context.getSession().users().addUser(context.getRealm(), userName);
             newUser.setEnabled(true);
             newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
+            newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
             context.success();
-            logger.debug("User {} created successfully", userName);
+            logger.info("User {} created successfully", userName);
         } catch (Exception e) {
             logger.error("Failed to create user", e);
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Internal server error", VERIFY_OTP_PAGE);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INTERNAL_ERROR, VERIFY_OTP_PAGE);
         }
     }
 
@@ -120,10 +184,10 @@ public class SMSAuthenticator implements Authenticator {
         UserModel user = context.getAuthenticationSession().getAuthenticatedUser();
 
         if (user != null) {
-            String mobileNumber = user.getFirstAttribute("mobileNumber");
+            String mobileNumber = user.getUsername();
 
             if (mobileNumber == null) {
-                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Mobile number is missing. Restart the login process.", form);
+                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, MOBILE_NUMBER_NULL, form);
                 return;
             }
 
@@ -131,14 +195,17 @@ public class SMSAuthenticator implements Authenticator {
             boolean otpSent = OtpUtils.sendOTP(mobileNumber, generatedOtp, context, VERIFY_OTP_PAGE);
 
             if (otpSent) {
+                logger.info("OTP resent successfully.");
                 context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, generatedOtp);
                 context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
-                context.challenge(context.form().setSuccess("OTP sent successfully").createForm(VERIFY_OTP_PAGE));
+                context.challenge(context.form().setSuccess(OTP_SENT).createForm(VERIFY_OTP_PAGE));
             } else {
-                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "Internal Server Error, OTP sent failed.", VERIFY_OTP_PAGE);
+                logger.info(OTP_SEND_FAILED);
+                showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, OTP_SENT_FAILED, VERIFY_OTP_PAGE);
             }
         } else {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, "User not found or mobile number is missing", VERIFY_OTP_PAGE);
+            logger.error(USER_NOT_FOUND);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, USER_NOT_FOUND, LOGIN_PAGE);
         }
     }
 
