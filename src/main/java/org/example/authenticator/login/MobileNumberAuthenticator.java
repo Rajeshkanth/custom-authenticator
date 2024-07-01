@@ -8,6 +8,8 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.*;
 import org.keycloak.credential.CredentialInput;
 import org.keycloak.credential.PasswordCredentialProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,18 +19,20 @@ import static org.example.authenticator.utils.FailureChallenge.showError;
 import static org.example.authenticator.utils.FindUser.findUser;
 
 public class MobileNumberAuthenticator implements Authenticator {
+    private static final Logger logger = LoggerFactory.getLogger(MobileNumberAuthenticator.class);
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+        logger.info("Entered in login authenticate");
         boolean isRememberMeAllowed = context.getRealm().isRememberMe();
-        context.form().setAttribute("isRememberMeAllowed", isRememberMeAllowed);
-        context.form().setAttribute("login", context.getAuthenticationSession().getAuthenticatedUser());
-        context.getAuthenticationSession().setAuthNote("FLOW_TYPE", LOGIN_FLOW);
+        context.form().setAttribute(IS_REMEMBER_ME_ALLOWED, isRememberMeAllowed);
+        context.form().setAttribute(LOGIN_FLOW, context.getAuthenticationSession().getAuthenticatedUser());
         context.challenge(context.form().createForm(LOGIN_PAGE));
     }
 
     @Override
     public void action(AuthenticationFlowContext context) {
+        logger.info("Entered in login action");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
         String password = formParams.getFirst(PASSWORD);

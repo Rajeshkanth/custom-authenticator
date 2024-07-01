@@ -52,4 +52,5 @@ public class Constants {
     // Required actions
     public static final int PASSWORD_EXPIRY_DAYS = 1;
     public static final String IS_REMEMBER_ME_ALLOWED = "isRememberMeAllowed";
+    public static final String SMS_PROVIDER_ID = "sms-form";
 }
