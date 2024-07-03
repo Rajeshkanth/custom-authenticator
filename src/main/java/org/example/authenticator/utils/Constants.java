@@ -22,6 +22,7 @@ public class Constants {
     public static final String OTP_EXPIRED = "OTP has expired. Please request a new OTP.";
     public static final String MOBILE_NUMBER = "mobileNumber";
     public static final String OTP_SENT = "OTP sent successfully";
+    public static final String USERNAME = "username";
 
     //     forms
     public static final String VERIFY_OTP_PAGE = "verify-otp.ftl";
@@ -53,4 +54,14 @@ public class Constants {
     public static final int PASSWORD_EXPIRY_DAYS = 1;
     public static final String IS_REMEMBER_ME_ALLOWED = "isRememberMeAllowed";
     public static final String SMS_PROVIDER_ID = "sms-form";
+    public static final String REGISTER_PROVIDER_ID = "registration using mobile number";
+    public static final String ALGORITHM = "RS256";
+    public static final String JWT = "JWT";
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String BEARER = "Bearer ";
+    public static final String HEADER_VALUE = "application/json";
+    public static final String ACCEPT = "Accept";
+    public static final String CONTENT_TYPE = "Content-type";
+    public static final String SIGNUP_USER_API = "SIGNUP_USER_API";
+    public static final String SIGN_UP_PATH = "/signUp";
 }

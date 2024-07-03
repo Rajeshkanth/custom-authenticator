@@ -8,7 +8,6 @@ public class FindUser {
     private FindUser() {
         // intentionally set to empty
     }
-
     public static UserModel findUser(KeycloakSession session, RealmModel realm, String mobileNumber) {
         return session.users().getUserByUsername(realm, mobileNumber);
     }
