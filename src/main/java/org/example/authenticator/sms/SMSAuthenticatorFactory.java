@@ -12,10 +12,10 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 import java.util.List;
 
 public class SMSAuthenticatorFactory implements AuthenticatorFactory {
-    public static final String PROVIDER_ID = "sms-form";
-    public static final String DISPLAY_NAME = "SMS Authenticator";
-    public static final String HELP_TEXT = "Authenticator for SMS functionalities";
-    public static final String OTP = "otp";
+    private static final String PROVIDER_ID = "sms-form";
+    private static final String DISPLAY_NAME = "SMS Authenticator";
+    private static final String HELP_TEXT = "Authenticator for SMS functionalities";
+    private static final String OTP = "otp";
 
     @Override
     public Authenticator create(KeycloakSession session) {

@@ -9,6 +9,8 @@ import org.keycloak.authentication.AuthenticationFlowError;
 
 import java.util.Random;
 
+import static org.example.authenticator.utils.Constants.*;
+
 public class OtpUtils {
 
     private OtpUtils() {
@@ -19,7 +21,6 @@ public class OtpUtils {
     private static final String AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
     private static final String TWILIO_PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER");
     private static final Random random = new Random();
-
 
     public static String generateOTP(int length) {
         String numbers = "0123456789";
@@ -43,7 +44,7 @@ public class OtpUtils {
             ).create();
             return true;
         } catch (Exception e) {
-            context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR, context.form().setError("Internal server error").createForm(form));
+            context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR, context.form().setError(INTERNAL_ERROR).createForm(form));
             return false;
         }
     }

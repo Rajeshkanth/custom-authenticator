@@ -171,6 +171,7 @@ public class SMSAuthenticator implements Authenticator {
             newUser.setEnabled(true);
             newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
             newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
+            context.setUser(newUser);
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
             context.success();
             logger.info("User {} created successfully", userName);

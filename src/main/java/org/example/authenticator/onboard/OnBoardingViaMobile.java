@@ -5,6 +5,9 @@ import org.example.authenticator.utils.OtpUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.events.Details;
+import org.keycloak.events.EventBuilder;
+import org.keycloak.events.EventType;
 import org.keycloak.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +79,8 @@ public class OnBoardingViaMobile implements Authenticator {
             newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
             newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
+
+            triggerRegisterEvent(context, newUser);
             context.success();
             logger.info("User {} created successfully", mobileNumber);
         } catch (Exception e) {
@@ -102,6 +107,18 @@ public class OnBoardingViaMobile implements Authenticator {
             }
         }
         return false;
+    }
+
+    public void triggerRegisterEvent(AuthenticationFlowContext context, UserModel newUser){
+        logger.info("Triggering Register Event.");
+        EventBuilder eventBuilder = context.getEvent()
+                .clone().event(EventType.REGISTER)
+                .client(context.getAuthenticationSession().getClient())
+                .user(newUser);
+
+        eventBuilder.detail(Details.USERNAME, newUser.getUsername())
+                .detail(Details.REGISTER_METHOD, REGISTER_PROVIDER_ID)
+                .success();
     }
 
     private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, String password) {

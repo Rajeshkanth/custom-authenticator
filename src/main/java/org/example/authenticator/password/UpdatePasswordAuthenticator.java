@@ -1,7 +1,6 @@
 package org.example.authenticator.password;
 
 import jakarta.ws.rs.core.MultivaluedMap;
-import org.example.requiredaction.ExpiredPasswordUpdateAction;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
