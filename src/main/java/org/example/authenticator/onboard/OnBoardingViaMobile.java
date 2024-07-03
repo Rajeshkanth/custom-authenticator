@@ -109,7 +109,7 @@ public class OnBoardingViaMobile implements Authenticator {
         return false;
     }
 
-    public void triggerRegisterEvent(AuthenticationFlowContext context, UserModel newUser){
+    public static void triggerRegisterEvent(AuthenticationFlowContext context, UserModel newUser){
         logger.info("Triggering Register Event.");
         EventBuilder eventBuilder = context.getEvent()
                 .clone().event(EventType.REGISTER)

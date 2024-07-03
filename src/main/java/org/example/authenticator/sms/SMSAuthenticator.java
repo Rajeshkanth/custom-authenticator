@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.authenticator.onboard.OnBoardingViaMobile.triggerRegisterEvent;
 import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;
 
@@ -173,6 +174,7 @@ public class SMSAuthenticator implements Authenticator {
             newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
             context.setUser(newUser);
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
+            triggerRegisterEvent(context, newUser);
             context.success();
             logger.info("User {} created successfully", userName);
         } catch (Exception e) {
