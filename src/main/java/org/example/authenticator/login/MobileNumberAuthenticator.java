@@ -1,7 +1,6 @@
 package org.example.authenticator.login;
 
 import jakarta.ws.rs.core.MultivaluedMap;
-import org.example.authenticator.utils.OtpUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
@@ -10,12 +9,8 @@ import org.keycloak.models.*;
 import org.keycloak.credential.CredentialInput;
 import org.keycloak.credential.PasswordCredentialProvider;
 import org.keycloak.services.managers.BruteForceProtector;
-import org.keycloak.services.managers.BruteForceProtectorSpi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;

@@ -1,7 +1,6 @@
 package org.example.authenticator.password;
 
 import jakarta.ws.rs.core.MultivaluedMap;
-import org.example.authenticator.utils.OtpUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;

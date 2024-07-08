@@ -9,7 +9,6 @@ import org.keycloak.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,13 +92,14 @@ public class SMSAuthenticator implements Authenticator {
         AuthenticationFlowModel parentFlow = context.getRealm().getAuthenticationFlowById(parentFlowId);
         List<AuthenticationExecutionModel> executions = context.getRealm().getAuthenticationExecutionsStream(parentFlowId).collect(Collectors.toList());
         logger.info(parentFlow.getProviderId());
+
         for (AuthenticationExecutionModel execution : executions) {
             switch (execution.getAuthenticator()) {
-                case "mobile-authenticator":
+                case LOGIN_PROVIDER_ID:
                     return LOGIN_FLOW;
-                case "reset-credential-authenticator":
+                case RESET_CRED_PROVIDER_ID:
                     return RESET_PASSWORD_FLOW;
-                case "registration using mobile number":
+                case REGISTER_PROVIDER_ID:
                     return REGISTER_FLOW;
                 default:
                     break;
@@ -165,13 +165,12 @@ public class SMSAuthenticator implements Authenticator {
 
     private void createUserAndAuthenticate(AuthenticationFlowContext context) {
         String userName = context.getAuthenticationSession().getAuthNote(TEMP_USER_NAME);
-        String password = context.getAuthenticationSession().getAuthNote(TEMP_PASSWORD);
+        String dob = context.getAuthenticationSession().getAuthNote(TEMP_DOB);
 
         try {
             UserModel newUser = context.getSession().users().addUser(context.getRealm(), userName);
             newUser.setEnabled(true);
-            newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
-            newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
+            newUser.setSingleAttribute(DOB, dob);
             context.setUser(newUser);
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
             triggerRegisterEvent(context, newUser);

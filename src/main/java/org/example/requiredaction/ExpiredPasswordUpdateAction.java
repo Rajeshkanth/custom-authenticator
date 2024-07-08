@@ -4,6 +4,8 @@ import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionProvider;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.policy.PasswordPolicyManagerProvider;
+import org.keycloak.policy.PolicyError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +39,7 @@ public class ExpiredPasswordUpdateAction implements RequiredActionProvider {
     @Override
     public void requiredActionChallenge(RequiredActionContext context) {
         logger.info("Entered in expired password update required action challenge.");
-        context.challenge(context.form().createForm(UPDATE_PASSWORD_PAGE));
+        context.challenge(context.form().setError(UPDATE_EXPIRED_PASSWORD).createForm(UPDATE_PASSWORD_PAGE));
     }
 
     @Override
@@ -59,10 +61,24 @@ public class ExpiredPasswordUpdateAction implements RequiredActionProvider {
             return;
         }
 
+        String passwordError = isPasswordMatchesPasswordPolicies(context, context.getUser().getUsername(), password);
+        if (passwordError != null) {
+            context.challenge(context.form().setError(passwordError).createForm(UPDATE_PASSWORD_PAGE));
+            return;
+        }
+
         user.credentialManager().updateCredential(UserCredentialModel.password(confirmPassword));
         user.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
         user.removeRequiredAction(ExpiredPasswordUpdateActionFactory.PROVIDER_ID);
         context.success();
+    }
+
+    private String isPasswordMatchesPasswordPolicies(RequiredActionContext context, String mobileNumber, String password) {
+        logger.info("Validating password with policy");
+        PasswordPolicyManagerProvider passwordPolicy = context.getSession().getProvider(PasswordPolicyManagerProvider.class);
+        PolicyError passwordError = passwordPolicy.validate(mobileNumber, password);
+
+        return passwordError != null ? passwordError.getMessage() : null;
     }
 
     public boolean isPasswordExpired(String passwordExpireDate) {

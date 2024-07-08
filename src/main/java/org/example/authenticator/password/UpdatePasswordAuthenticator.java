@@ -22,6 +22,7 @@ import static org.example.authenticator.utils.FailureChallenge.showError;
 public class UpdatePasswordAuthenticator implements Authenticator {
 
     private static final Logger logger = LoggerFactory.getLogger(UpdatePasswordAuthenticator.class);
+
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         logger.info("Entered in Update password authenticate part.");
@@ -43,7 +44,7 @@ public class UpdatePasswordAuthenticator implements Authenticator {
 
         String passwordError = isPasswordMatchesPasswordPolicies(context, context.getUser().getUsername(), password);
 
-        if (passwordError != null){
+        if (passwordError != null) {
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, passwordError, UPDATE_PASSWORD_PAGE);
             return;
         }

@@ -65,23 +65,23 @@ public class NoBrithDatePasswordPolicyProviderFactory implements PasswordPolicyP
         return PROVIDER_ID;
     }
 
-    public List<ProviderConfigProperty> getConfigProperties(){
-            List<ProviderConfigProperty> configProperties = new ArrayList<>();
-            ProviderConfigProperty configProperty = new ProviderConfigProperty();
-            configProperty.setName(CONFIG_PROPERTY_NAME);
-            configProperty.setType(ProviderConfigProperty.LIST_TYPE);
-            configProperty.setLabel(CONFIG_PROPERTY_LABEL);
-            configProperty.setHelpText(CONFIG_PROPERTY_HELP);
+    public List<ProviderConfigProperty> getConfigProperties() {
+        List<ProviderConfigProperty> configProperties = new ArrayList<>();
+        ProviderConfigProperty configProperty = new ProviderConfigProperty();
+        configProperty.setName(CONFIG_PROPERTY_NAME);
+        configProperty.setType(ProviderConfigProperty.LIST_TYPE);
+        configProperty.setLabel(CONFIG_PROPERTY_LABEL);
+        configProperty.setHelpText(CONFIG_PROPERTY_HELP);
 
-            List<String> options = new ArrayList<>();
-            options.add(FULL_DOB);
-            options.add(DATE);
-            options.add(MONTH);
-            options.add(YEAR);
+        List<String> options = new ArrayList<>();
+        options.add(FULL_DOB);
+        options.add(DATE);
+        options.add(MONTH);
+        options.add(YEAR);
 
-            configProperty.setOptions(options);
-            configProperties.add(configProperty);
+        configProperty.setOptions(options);
+        configProperties.add(configProperty);
 
-            return configProperties;
+        return configProperties;
     }
 }

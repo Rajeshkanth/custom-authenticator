@@ -8,8 +8,6 @@ import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
-import org.keycloak.policy.PasswordPolicyManagerProvider;
-import org.keycloak.policy.PolicyError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,23 +38,9 @@ public class OnBoardingViaMobile implements Authenticator {
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
         LocalDate dob = LocalDate.parse(formParams.getFirst(DOB));
-        String password = formParams.getFirst(PASSWORD);
-        String confirmPassword = formParams.getFirst(CONFIRM_PASSWORD);
 
-        if (isFormIncomplete(mobileNumber, dob, password, confirmPassword)) {
+        if (isFormIncomplete(mobileNumber, dob)) {
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, REQUIRED_FIELDS, REGISTER_PAGE);
-            return;
-        }
-
-        String passwordError = isPasswordMatchesPasswordPolicies(context, mobileNumber, password);
-
-        if (passwordError != null) {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, passwordError, REGISTER_PAGE);
-            return;
-        }
-
-        if (!password.equals(confirmPassword)) {
-            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, NO_MATCHING_PASSWORD, REGISTER_PAGE);
             return;
         }
 
@@ -68,11 +52,11 @@ public class OnBoardingViaMobile implements Authenticator {
         try {
             if (isSmsFlowRequired(context)) {
                 logger.info("SMS flow required");
-                storeTemporaryUserData(context, mobileNumber, dob, password);
+                storeTemporaryUserData(context, mobileNumber, dob);
                 context.success();
             } else {
                 logger.info("SMS flow disabled");
-                createUserAndAuthenticate(context, mobileNumber, dob, password);
+                createUserAndAuthenticate(context, mobileNumber, dob);
             }
         } catch (Exception e) {
             logger.error("Failed to create user", e);
@@ -80,21 +64,11 @@ public class OnBoardingViaMobile implements Authenticator {
         }
     }
 
-    private String isPasswordMatchesPasswordPolicies(AuthenticationFlowContext context, String mobileNumber, String password) {
-        logger.info("Validating password with policy");
-        PasswordPolicyManagerProvider passwordPolicy = context.getSession().getProvider(PasswordPolicyManagerProvider.class);
-        PolicyError passwordError = passwordPolicy.validate(mobileNumber, password);
-
-        return passwordError != null ? passwordError.getMessage() : null;
-    }
-
-    private void createUserAndAuthenticate(AuthenticationFlowContext context, String mobileNumber, LocalDate dob, String password) {
+    private void createUserAndAuthenticate(AuthenticationFlowContext context, String mobileNumber, LocalDate dob) {
         try {
             logger.info("Creating user without sms validation");
             UserModel newUser = context.getSession().users().addUser(context.getRealm(), mobileNumber);
             newUser.setEnabled(true);
-            newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
-            newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
             newUser.setSingleAttribute(DOB, String.valueOf(dob));
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
 
@@ -107,11 +81,8 @@ public class OnBoardingViaMobile implements Authenticator {
         }
     }
 
-    private boolean isFormIncomplete(String mobileNumber, LocalDate dob, String password, String confirmPassword) {
-        return mobileNumber == null || mobileNumber.isEmpty() ||
-                dob == null ||
-                password == null || password.isEmpty() ||
-                confirmPassword == null || confirmPassword.isEmpty();
+    private boolean isFormIncomplete(String mobileNumber, LocalDate dob) {
+        return mobileNumber == null || mobileNumber.isEmpty() || dob == null;
     }
 
     private boolean isSmsFlowRequired(AuthenticationFlowContext context) {
@@ -140,10 +111,9 @@ public class OnBoardingViaMobile implements Authenticator {
                 .success();
     }
 
-    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, LocalDate dob, String password) {
+    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, LocalDate dob) {
         context.getAuthenticationSession().setAuthNote(TEMP_USER_NAME, mobileNumber);
         context.getAuthenticationSession().setAuthNote(TEMP_DOB, String.valueOf(dob));
-        context.getAuthenticationSession().setAuthNote(TEMP_PASSWORD, password);
     }
 
     @Override

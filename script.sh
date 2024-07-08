@@ -56,39 +56,48 @@ if ! move_files "$SEARCH_DIR" "$TARGET_DIR" "$FILE_NAME"; then
     echo "$FILE_MOVED"
 fi
 
-# Moving to the custom api provider path
 cd ..
 
-if ! cd rest; then
-  echo "$PATH_OPEN_FAILED"
-  exit 1
-fi
-
-if ! mvn clean package; then
-  echo "FAILED_MESSAGE"
-  exit 1
-fi
-
-# Moving jar files to the providers folder
-if ! move_files "$SEARCH_DIR" "$TARGET_DIR" "$FILE_NAME"; then
-  echo "$MOVING_FAILED"
-  exit 1
+if ! docker build -t kc-latest -f Dockerfile-kc .; then
+  echo "Image build failed"
+  exit 1;
   else
-    echo "$FILE_MOVED"
+    echo "Image build"
 fi
-
-cd ..
-
-if ! cd keycloak-24.0.3; then
-  echo "Failed to open keycloak folder"
-  exit 1
-fi
-
-if ! bin/kc.sh start-dev; then
-  echo "kc build failed"
-  exit 1
-fi
-
-# Setting the path for authenticators to start again for next usage
-cd ..
+#
+## Moving to the custom api provider path
+#cd ..
+#
+#if ! cd rest; then
+#  echo "$PATH_OPEN_FAILED"
+#  exit 1
+#fi
+#
+#if ! mvn clean package; then
+#  echo "FAILED_MESSAGE"
+#  exit 1
+#fi
+#
+## Moving jar files to the providers folder
+#if ! move_files "$SEARCH_DIR" "$TARGET_DIR" "$FILE_NAME"; then
+#  echo "$MOVING_FAILED"
+#  exit 1
+#  else
+#    echo "$FILE_MOVED"
+#fi
+#
+#cd ..
+#
+#if ! cd keycloak-24.0.3; then
+#  echo "Failed to open keycloak folder"
+#  exit 1
+#fi
+#
+#if ! bin/kc.sh start-dev; then
+#  echo "kc build failed"
+#  exit 1
+#fi
+#
+## Setting the path for authenticators to start again for next usage
+#cd ..
 cd authenticators || echo "Unable to locate the authenticators folder"

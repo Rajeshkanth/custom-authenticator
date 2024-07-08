@@ -14,7 +14,7 @@ import java.util.List;
 public class UpdatePasswordAuthenticatorFactory implements AuthenticatorFactory {
     private static final String PROVIDER_ID = "update-password-authenticator";
     private static final String DISPLAY_TEXT = "Update Password Authenticator";
-    private static final String HELP_TEXT= "Displays a form to change the password after successful otp validation.";
+    private static final String HELP_TEXT = "Displays a form to change the password after successful otp validation.";
 
     @Override
     public String getDisplayType() {

@@ -11,6 +11,7 @@ import static org.example.authenticator.utils.Constants.PASSWORD_STARTS_WITH_SPE
 public class StartsWithSpecialCharacterPolicyProviderFactory implements PasswordPolicyProviderFactory {
 
     private static final String DISPLAY_NAME = "Starts with special character";
+
     @Override
     public PasswordPolicyProvider create(KeycloakSession session) {
         return new StartsWithSpecialCharacterPolicyProvider(session.getContext());

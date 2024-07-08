@@ -31,7 +31,7 @@ public class NoBirthDatePasswordPolicyProvider implements PasswordPolicyProvider
         UserModel userModel = context.getAuthenticationSession().getAuthenticatedUser() != null ? context.getAuthenticationSession().getAuthenticatedUser() : null;
 
         // Assigning dob based on login or registration
-        String dob = userModel != null ? userModel.getFirstAttribute(DOB) : context.getAuthenticationSession().getAuthNote(DOB) ;
+        String dob = userModel != null ? userModel.getFirstAttribute(DOB) : context.getAuthenticationSession().getAuthNote(DOB);
 
         if (dob != null) {
             String formattedDob = dob.replace("-", "");
@@ -47,7 +47,7 @@ public class NoBirthDatePasswordPolicyProvider implements PasswordPolicyProvider
                 case DATE:
                 case MONTH:
                 case YEAR:
-                    if(password.contains(dobParts[0]) || password.contains(dobParts[1]) || password.contains(dobParts[2]))
+                    if (password.contains(dobParts[0]) || password.contains(dobParts[1]) || password.contains(dobParts[2]))
                         return new PolicyError(PASSWORD_CANNOT_CONTAIN_DATE_OF_BIRTH_PARTS, noDobInPassword);
                     break;
                 default:

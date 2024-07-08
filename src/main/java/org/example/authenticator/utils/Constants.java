@@ -35,7 +35,6 @@ public class Constants {
 
     // User
     public static final String TEMP_USER_NAME = "TEMP_USER_NAME";
-    public static final String TEMP_PASSWORD = "TEMP_PASSWORD";
     public static final String TEMP_DOB = "TEMP_DOB";
     public static final String PASSWORD = "password";
     public static final String CONFIRM_PASSWORD = "confirmPassword";
@@ -59,7 +58,9 @@ public class Constants {
     public static final int PASSWORD_EXPIRY_DAYS = 1;
     public static final String IS_REMEMBER_ME_ALLOWED = "isRememberMeAllowed";
     public static final String SMS_PROVIDER_ID = "sms-form";
+    public static final String LOGIN_PROVIDER_ID = "mobile-authenticator";
     public static final String REGISTER_PROVIDER_ID = "registration using mobile number";
+    public static final String RESET_CRED_PROVIDER_ID = "reset-credential-authenticator";
     public static final String ALGORITHM = "RS256";
     public static final String JWT = "JWT";
     public static final String AUTHORIZATION = "Authorization";
@@ -69,7 +70,6 @@ public class Constants {
     public static final String CONTENT_TYPE = "Content-type";
     public static final String SIGNUP_USER_API = "SIGNUP_USER_API";
     public static final String SIGN_UP_PATH = "/signUp";
-    public static final String PASSWORD_POLICY_ERROR = "Password must have a upper case letter, a special character,";
     public static final int MAX_OTP_RESEND_ATTEMPTS = 3;
     public static final String OTP_RESEND_COUNT = "otpResendCount";
     public static final String OTP_LAST_RESEND_TIME = "otpLastSendTime";
@@ -83,8 +83,9 @@ public class Constants {
     public static final String DATE = "date";
     public static final String MONTH = "month";
     public static final String YEAR = "year";
-    public static final String  NO_DOB_IN_PASSWORD_POLICY_PROVIDER_ID = "noDateOfBirthAllowed";
+    public static final String NO_DOB_IN_PASSWORD_POLICY_PROVIDER_ID = "noDateOfBirthAllowed";
     public static final String PASSWORD_CANNOT_CONTAIN_DATE_OF_BIRTH = "Password cannot contains your full date of birth";
     public static final String UNIDENTIFIED_POLICY_INPUT = "Unidentified value present in no dob password policy input";
-    public static final String  PASSWORD_CANNOT_CONTAIN_DATE_OF_BIRTH_PARTS = "Password cannot contain any part of the date of birth";
+    public static final String PASSWORD_CANNOT_CONTAIN_DATE_OF_BIRTH_PARTS = "Password cannot contain any part of the date of birth";
+    public static final String UPDATE_EXPIRED_PASSWORD = "Password expired, update password to continue!";
 }

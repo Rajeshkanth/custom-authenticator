@@ -9,6 +9,7 @@ import org.keycloak.models.KeycloakSessionFactory;
 public class CustomEventListenerFactory implements EventListenerProviderFactory {
 
     public static final String PROVIDER_ID = "custom-event-listener";
+
     @Override
     public EventListenerProvider create(KeycloakSession session) {
         return new CustomEventListener(session);
