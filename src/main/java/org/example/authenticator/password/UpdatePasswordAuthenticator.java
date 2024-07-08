@@ -2,11 +2,14 @@ package org.example.authenticator.password;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.policy.PasswordPolicyManagerProvider;
+import org.keycloak.policy.PolicyError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 
 import static org.example.authenticator.utils.Constants.*;
+import static org.example.authenticator.utils.FailureChallenge.showError;
 
 public class UpdatePasswordAuthenticator implements Authenticator {
 
@@ -37,9 +41,24 @@ public class UpdatePasswordAuthenticator implements Authenticator {
             return;
         }
 
+        String passwordError = isPasswordMatchesPasswordPolicies(context, context.getUser().getUsername(), password);
+
+        if (passwordError != null){
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, passwordError, UPDATE_PASSWORD_PAGE);
+            return;
+        }
+
         user.credentialManager().updateCredential(UserCredentialModel.password(password, false));
         user.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
         context.success();
+    }
+
+    private String isPasswordMatchesPasswordPolicies(AuthenticationFlowContext context, String mobileNumber, String password) {
+        logger.info("Validating password with policy");
+        PasswordPolicyManagerProvider passwordPolicy = context.getSession().getProvider(PasswordPolicyManagerProvider.class);
+        PolicyError passwordError = passwordPolicy.validate(mobileNumber, password);
+
+        return passwordError != null ? passwordError.getMessage() : null;
     }
 
     @Override

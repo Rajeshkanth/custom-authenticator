@@ -1,7 +1,6 @@
 package org.example.authenticator.onboard;
 
 import jakarta.ws.rs.core.MultivaluedMap;
-import org.example.authenticator.utils.OtpUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
@@ -9,6 +8,8 @@ import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.models.*;
+import org.keycloak.policy.PasswordPolicyManagerProvider;
+import org.keycloak.policy.PolicyError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class OnBoardingViaMobile implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        logger.info("Entering in onboard authenticate.");
+        logger.info("Entering in onboard authenticate");
         boolean isRememberMeEnabled = context.getRealm().isRememberMe();
         context.form().setAttribute(IS_REMEMBER_ME_ALLOWED, isRememberMeEnabled);
         context.form().setAttribute(LOGIN_FLOW, context.getAuthenticationSession().getAuthenticatedUser());
@@ -35,14 +36,22 @@ public class OnBoardingViaMobile implements Authenticator {
 
     @Override
     public void action(AuthenticationFlowContext context) {
-        logger.info("Entering in onboarding action.");
+        logger.info("Entering in onboarding action");
         MultivaluedMap<String, String> formParams = context.getHttpRequest().getDecodedFormParameters();
         String mobileNumber = formParams.getFirst(MOBILE_NUMBER);
+        LocalDate dob = LocalDate.parse(formParams.getFirst(DOB));
         String password = formParams.getFirst(PASSWORD);
         String confirmPassword = formParams.getFirst(CONFIRM_PASSWORD);
 
-        if (isFormIncomplete(mobileNumber, password, confirmPassword)) {
+        if (isFormIncomplete(mobileNumber, dob, password, confirmPassword)) {
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, REQUIRED_FIELDS, REGISTER_PAGE);
+            return;
+        }
+
+        String passwordError = isPasswordMatchesPasswordPolicies(context, mobileNumber, password);
+
+        if (passwordError != null) {
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, passwordError, REGISTER_PAGE);
             return;
         }
 
@@ -58,12 +67,12 @@ public class OnBoardingViaMobile implements Authenticator {
 
         try {
             if (isSmsFlowRequired(context)) {
-                logger.info("SMS flow required.");
-                storeTemporaryUserData(context, mobileNumber, password);
+                logger.info("SMS flow required");
+                storeTemporaryUserData(context, mobileNumber, dob, password);
                 context.success();
             } else {
-                logger.info("SMS flow disabled.");
-                createUserAndAuthenticate(context, mobileNumber, password);
+                logger.info("SMS flow disabled");
+                createUserAndAuthenticate(context, mobileNumber, dob, password);
             }
         } catch (Exception e) {
             logger.error("Failed to create user", e);
@@ -71,13 +80,22 @@ public class OnBoardingViaMobile implements Authenticator {
         }
     }
 
-    private void createUserAndAuthenticate(AuthenticationFlowContext context, String mobileNumber, String password) {
+    private String isPasswordMatchesPasswordPolicies(AuthenticationFlowContext context, String mobileNumber, String password) {
+        logger.info("Validating password with policy");
+        PasswordPolicyManagerProvider passwordPolicy = context.getSession().getProvider(PasswordPolicyManagerProvider.class);
+        PolicyError passwordError = passwordPolicy.validate(mobileNumber, password);
+
+        return passwordError != null ? passwordError.getMessage() : null;
+    }
+
+    private void createUserAndAuthenticate(AuthenticationFlowContext context, String mobileNumber, LocalDate dob, String password) {
         try {
-            logger.info("Creating user without sms validation.");
+            logger.info("Creating user without sms validation");
             UserModel newUser = context.getSession().users().addUser(context.getRealm(), mobileNumber);
             newUser.setEnabled(true);
             newUser.credentialManager().updateCredential(UserCredentialModel.password(password, false));
             newUser.setSingleAttribute(PASSWORD_LAST_CHANGED, LocalDate.now().toString());
+            newUser.setSingleAttribute(DOB, String.valueOf(dob));
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
 
             triggerRegisterEvent(context, newUser);
@@ -89,8 +107,9 @@ public class OnBoardingViaMobile implements Authenticator {
         }
     }
 
-    private boolean isFormIncomplete(String mobileNumber, String password, String confirmPassword) {
+    private boolean isFormIncomplete(String mobileNumber, LocalDate dob, String password, String confirmPassword) {
         return mobileNumber == null || mobileNumber.isEmpty() ||
+                dob == null ||
                 password == null || password.isEmpty() ||
                 confirmPassword == null || confirmPassword.isEmpty();
     }
@@ -109,8 +128,8 @@ public class OnBoardingViaMobile implements Authenticator {
         return false;
     }
 
-    public static void triggerRegisterEvent(AuthenticationFlowContext context, UserModel newUser){
-        logger.info("Triggering Register Event.");
+    public static void triggerRegisterEvent(AuthenticationFlowContext context, UserModel newUser) {
+        logger.info("Triggering Register Event");
         EventBuilder eventBuilder = context.getEvent()
                 .clone().event(EventType.REGISTER)
                 .client(context.getAuthenticationSession().getClient())
@@ -121,8 +140,9 @@ public class OnBoardingViaMobile implements Authenticator {
                 .success();
     }
 
-    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, String password) {
+    private void storeTemporaryUserData(AuthenticationFlowContext context, String mobileNumber, LocalDate dob, String password) {
         context.getAuthenticationSession().setAuthNote(TEMP_USER_NAME, mobileNumber);
+        context.getAuthenticationSession().setAuthNote(TEMP_DOB, String.valueOf(dob));
         context.getAuthenticationSession().setAuthNote(TEMP_PASSWORD, password);
     }
 

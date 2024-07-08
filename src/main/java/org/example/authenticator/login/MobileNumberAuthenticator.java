@@ -5,9 +5,12 @@ import org.example.authenticator.utils.OtpUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.events.Errors;
 import org.keycloak.models.*;
 import org.keycloak.credential.CredentialInput;
 import org.keycloak.credential.PasswordCredentialProvider;
+import org.keycloak.services.managers.BruteForceProtector;
+import org.keycloak.services.managers.BruteForceProtectorSpi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +27,7 @@ public class MobileNumberAuthenticator implements Authenticator {
     @Override
     public void authenticate(AuthenticationFlowContext context) {
         logger.info("Entered in login authenticate");
+
         boolean isRememberMeAllowed = context.getRealm().isRememberMe();
         context.form().setAttribute(IS_REMEMBER_ME_ALLOWED, isRememberMeAllowed);
         context.form().setAttribute(LOGIN_FLOW, context.getAuthenticationSession().getAuthenticatedUser());
@@ -50,9 +54,31 @@ public class MobileNumberAuthenticator implements Authenticator {
 
     private void handleLoginForm(AuthenticationFlowContext context, String mobileNumber, String password) {
         UserModel user = findUser(context.getSession(), context.getRealm(), mobileNumber);
-        if (user != null && validatePassword(context.getSession(), context.getRealm(), user, UserCredentialModel.password(password))) {
+        RealmModel realm = context.getRealm();
+        BruteForceProtector protector = context.getSession().getProvider(BruteForceProtector.class);
+
+        if (user == null) {
+            logger.info(USER_NOT_FOUND);
+            showError(context, AuthenticationFlowError.INVALID_USER, USER_NOT_FOUND, LOGIN_PAGE);
+            return;
+        }
+
+        if (protector.isTemporarilyDisabled(context.getSession(), realm, user)) {
+            logger.warn("User is temporarily disabled.");
+            context.getEvent().user(user);
+            context.getEvent().error(Errors.USER_TEMPORARILY_DISABLED);
+            showError(context, AuthenticationFlowError.INVALID_USER, USER_TEMPORARILY_DISABLED, LOGIN_PAGE);
+            return;
+        }
+
+        if (validatePassword(context.getSession(), realm, user, UserCredentialModel.password(password))) {
+            protector.successfulLogin(realm, user, context.getConnection());
             authenticateUser(context, user);
         } else {
+            logger.info("Disabling user");
+            context.getEvent().user(user);
+            context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
+            protector.failedLogin(realm, user, context.getConnection());
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, INVALID_CREDENTIALS, LOGIN_PAGE);
         }
     }

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -42,15 +43,15 @@ public class CustomEventListener implements EventListenerProvider {
         logger.info("on event {}", toString(event));
 
         String mobileNumber = event.getDetails().get(USERNAME);
-        String password = event.getDetails().get(PASSWORD);
+        String dob = event.getDetails().get(DOB);
         KeycloakContext keycloakContext = session.getContext();
         RealmModel realm = session.getContext().getRealm();
-        UserModel user = session.users().getUserById(realm, event.getUserId());
-        String token = getAccessToken(keycloakContext, realm, user);
+        UserModel user = realm != null ? session.users().getUserById(realm, event.getUserId()) : null;
+        String token = user != null ? getAccessToken(keycloakContext, realm, user) : null;
 
         if (event.getType() == EventType.REGISTER) {
             if (token != null) {
-                sendUserRegistration(mobileNumber, password, token);
+                sendUserRegistration(mobileNumber, dob, token);
             } else {
                 logger.info("Token generation failed, {},{},{}", keycloakContext, realm, user);
             }
@@ -77,7 +78,7 @@ public class CustomEventListener implements EventListenerProvider {
         return new JWSBuilder().kid(key.getKid()).type(JWT).jsonContent(token).sign(new AsymmetricSignatureSignerContext(key));
     }
 
-    public void sendUserRegistration(String mobileNumber, String password, String token) {
+    public void sendUserRegistration(String mobileNumber, String dob, String token) {
 
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             logger.info("Calling external api to store the user in backend.");
@@ -86,7 +87,7 @@ public class CustomEventListener implements EventListenerProvider {
 
             Map<String, String> userMap = new HashMap<>();
             userMap.put(MOBILE_NUMBER, mobileNumber);
-            userMap.put(PASSWORD, password);
+            userMap.put(DOB, dob);
 
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(userMap);

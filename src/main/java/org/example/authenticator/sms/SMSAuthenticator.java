@@ -185,11 +185,30 @@ public class SMSAuthenticator implements Authenticator {
 
     private void handleOtpResend(AuthenticationFlowContext context, String form) {
         UserModel user = context.getAuthenticationSession().getAuthenticatedUser();
+        String resendOtpCountStr = context.getAuthenticationSession().getAuthNote(OTP_RESEND_COUNT);
+        String lastResendOtpTimeStr = context.getAuthenticationSession().getAuthNote(OTP_LAST_RESEND_TIME);
+
+        int resendOtpCount = resendOtpCountStr != null ? Integer.parseInt(resendOtpCountStr) : 0;
+        long lastResendTime = lastResendOtpTimeStr != null ? Long.parseLong(lastResendOtpTimeStr) : 0;
+        long currentTime = System.currentTimeMillis();
+
+        if ((currentTime - lastResendTime) < OTP_RESEND_COOLDOWN_DURATION && resendOtpCount >= MAX_OTP_RESEND_ATTEMPTS) {
+            logger.error("OTP resend limit reached.");
+            long waitTimeInSeconds = OTP_RESEND_COOLDOWN_DURATION - (currentTime - lastResendTime);
+            String waitTimeMessage = String.format(WAIT_FOR_OTP_RESEND_MESSAGE, waitTimeInSeconds / 1000);
+            showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, waitTimeMessage, form);
+            return;
+        }
+
+        if (resendOtpCount >= MAX_OTP_RESEND_ATTEMPTS) {
+            resendOtpCount = 0; // Reset count after cooldown period
+        }
 
         if (user != null) {
             String mobileNumber = user.getUsername();
 
             if (mobileNumber == null) {
+                logger.info("Mobile number is null.");
                 showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, MOBILE_NUMBER_NULL, form);
                 return;
             }
@@ -201,16 +220,19 @@ public class SMSAuthenticator implements Authenticator {
                 logger.info("OTP resent successfully.");
                 context.getAuthenticationSession().setAuthNote(OTP_SESSION_ATTRIBUTE, generatedOtp);
                 context.getAuthenticationSession().setAuthNote(OTP_CREATION_TIME_ATTRIBUTE, String.valueOf(System.currentTimeMillis()));
+                context.getAuthenticationSession().setAuthNote(OTP_RESEND_COUNT, String.valueOf(resendOtpCount + 1));
+                context.getAuthenticationSession().setAuthNote(OTP_LAST_RESEND_TIME, String.valueOf(currentTime));
                 context.challenge(context.form().setSuccess(OTP_SENT).createForm(VERIFY_OTP_PAGE));
             } else {
-                logger.info(OTP_SEND_FAILED);
+                logger.info("OTP send failed.");
                 showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, OTP_SENT_FAILED, VERIFY_OTP_PAGE);
             }
         } else {
-            logger.error(USER_NOT_FOUND);
+            logger.error("User not found.");
             showError(context, AuthenticationFlowError.INVALID_CREDENTIALS, USER_NOT_FOUND, LOGIN_PAGE);
         }
     }
+
 
     @Override
     public boolean requiresUser() {
