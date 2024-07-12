@@ -56,14 +56,14 @@ if ! move_files "$SEARCH_DIR" "$TARGET_DIR" "$FILE_NAME"; then
     echo "$FILE_MOVED"
 fi
 
-cd ..
-
-if ! docker build -t kc-latest -f Dockerfile-kc .; then
-  echo "Image build failed"
-  exit 1;
-  else
-    echo "Image build"
-fi
+#cd ..
+#
+#if ! docker build -t kc-latest -f Dockerfile-kc .; then
+#  echo "Image build failed"
+#  exit 1;
+#  else
+#    echo "Image build"
+#fi
 #
 ## Moving to the custom api provider path
 #cd ..
@@ -100,4 +100,4 @@ fi
 #
 ## Setting the path for authenticators to start again for next usage
 #cd ..
-cd authenticators || echo "Unable to locate the authenticators folder"
+#cd authenticators || echo "Unable to locate the authenticators folder"

@@ -88,4 +88,7 @@ public class Constants {
     public static final String UNIDENTIFIED_POLICY_INPUT = "Unidentified value present in no dob password policy input";
     public static final String PASSWORD_CANNOT_CONTAIN_DATE_OF_BIRTH_PARTS = "Password cannot contain any part of the date of birth";
     public static final String UPDATE_EXPIRED_PASSWORD = "Password expired, update password to continue!";
+    public static final int MAXIMUM_INACTIVE_DAYS = 90;
+    public static final String LAST_LOGIN = "lastLogin";
+
 }
