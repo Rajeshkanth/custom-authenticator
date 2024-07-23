@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class SchedulerResourceProvider implements RealmResourceProvider {
@@ -86,16 +87,31 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
         String name = data.get("name");
         String intervalStr = data.get("interval");
         String realmName = data.get("realm");
+        String intervalUnit = data.get("intervalUnit"); // "seconds", "minutes", "hours"
+        int interval;
 
         if (providerId == null || session.getKeycloakSessionFactory().getProviderFactory(SchedulerProvider.class, providerId) == null) {
             throw new BadRequestException("Scheduler task Provider with given providerId not found");
         }
 
-        int interval;
         try {
             interval = Integer.parseInt(intervalStr);
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid interval value");
+        }
+
+        long intervalMillis;
+        switch (intervalUnit) {
+            case "minutes":
+                intervalMillis = TimeUnit.MINUTES.toMillis(interval);
+                break;
+            case "hours":
+                intervalMillis = TimeUnit.HOURS.toMillis(interval);
+                break;
+            case "seconds":
+            default:
+                intervalMillis = TimeUnit.SECONDS.toMillis(interval);
+                break;
         }
 
         SchedulerProviderModel schedulerProviderModel = new SchedulerProviderModel();
@@ -112,7 +128,7 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
 
         // Schedule the task using TimerProvider
         TimerProvider timerProvider = session.getProvider(TimerProvider.class);
-        timerProvider.scheduleTask(new RemoveInactiveUserTask(realmName), interval);
+        timerProvider.scheduleTask(new RemoveInactiveUserTask(realmName), intervalMillis);
 
         logger.info("Scheduler task registered and scheduled successfully");
     }
