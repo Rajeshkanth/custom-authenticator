@@ -12,6 +12,8 @@ import org.keycloak.services.managers.BruteForceProtector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+
 import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;
 import static org.example.authenticator.utils.FindUser.findUser;
@@ -80,6 +82,7 @@ public class MobileNumberAuthenticator implements Authenticator {
 
     private void authenticateUser(AuthenticationFlowContext context, UserModel user) {
         context.getAuthenticationSession().setAuthenticatedUser(user);
+        user.setSingleAttribute(LAST_LOGIN, LocalDate.now().toString());
         context.success();
     }
 

@@ -52,6 +52,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
         </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-model-jpa</artifactId>
+            <version>24.0.3</version>
+        </dependency>
 
         <dependency>
             <groupId>com.twilio.sdk</groupId>

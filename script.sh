@@ -14,7 +14,7 @@ mvn clean package || echo "$FAILED_MESSAGE"
 # Directory to search and the target directory to move the file to
 SEARCH_DIR="./target"
 TARGET_DIR="../keycloak-24.0.3/providers"
-FILE_NAME="*.jar"
+FILE_NAME="authenticators-1.0-SNAPSHOT.jar"
 
 echo "Searching in directory: $SEARCH_DIR"
 echo "Target directory: $TARGET_DIR"

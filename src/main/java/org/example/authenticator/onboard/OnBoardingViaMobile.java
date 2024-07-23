@@ -71,7 +71,7 @@ public class OnBoardingViaMobile implements Authenticator {
             newUser.setEnabled(true);
             newUser.setSingleAttribute(DOB, String.valueOf(dob));
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
-
+            newUser.setSingleAttribute(LAST_LOGIN, LocalDate.now().toString());
             triggerRegisterEvent(context, newUser);
             context.success();
             logger.info("User {} created successfully", mobileNumber);

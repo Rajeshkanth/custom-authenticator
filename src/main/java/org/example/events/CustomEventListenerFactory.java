@@ -31,13 +31,13 @@ public class CustomEventListenerFactory implements EventListenerProviderFactory 
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-        factory.register(event -> {
-            if (event instanceof PostMigrationEvent){
-                KeycloakSession session = factory.create();
-                TimerProviderFactory provider = (TimerProviderFactory) factory.getProviderFactory(TimerProvider.class);
-                provider.create(session).scheduleTask(new RemoveInactiveUserTask(), 300000);
-            }
-        });
+//        factory.register(event -> {
+//            if (event instanceof PostMigrationEvent){
+//                KeycloakSession session = factory.create();
+//                TimerProviderFactory provider = (TimerProviderFactory) factory.getProviderFactory(TimerProvider.class);
+//                provider.create(session).scheduleTask(new RemoveInactiveUserTask(), 300000);
+//            }
+//        });
     }
 
     @Override

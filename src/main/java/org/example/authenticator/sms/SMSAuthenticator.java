@@ -9,6 +9,7 @@ import org.keycloak.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -173,6 +174,7 @@ public class SMSAuthenticator implements Authenticator {
             newUser.setSingleAttribute(DOB, dob);
             context.setUser(newUser);
             context.getAuthenticationSession().setAuthenticatedUser(newUser);
+            newUser.setSingleAttribute(LAST_LOGIN, LocalDate.now().toString());
             triggerRegisterEvent(context, newUser);
             context.success();
             logger.info("User {} created successfully", userName);
