@@ -46,9 +46,8 @@ public class SchedulerServiceImpl implements SchedulerService {
         auth.setRealm(getRealmEntity(session, model.getRealmName()));
         auth.setProviderId(model.getProviderId());
         auth.setInterval(model.getInterval());
-        auth.setCreateTime(model.getCreateTime());
-        auth.setLastRunTime(model.getLastRunTime());
-        auth.setNextRunTime(model.getNextRunTime());
+        auth.setIntrvlUnit(model.getIntrvl_unit());
+        auth.setEnabled(model.isEnabled());
         auth.setSettings(model.getSettings());
         getSchedulerProvidersWithEntity().add(auth);
         em.persist(auth);
@@ -65,8 +64,8 @@ public class SchedulerServiceImpl implements SchedulerService {
         entity.setProviderId(model.getProviderId());
         entity.setName(model.getName());
         entity.setInterval(model.getInterval());
-        entity.setLastRunTime(model.getLastRunTime());
-        entity.setNextRunTime(model.getNextRunTime());
+        entity.setEnabled(model.isEnabled());
+        entity.setIntrvlUnit(model.getIntrvl_unit());
         em.flush();
     }
 
@@ -111,9 +110,8 @@ public class SchedulerServiceImpl implements SchedulerService {
         model.setName(entity.getName());
         model.setInterval(entity.getInterval());
         model.setRealmName(entity.getRealm().getName());
-        model.setCreateTime(entity.getCreateTime());
-        model.setLastRunTime(entity.getLastRunTime());
-        model.setNextRunTime(entity.getNextRunTime());
+        model.setIntrvl_unit(entity.getIntrvlUnit());
+        model.setEnabled(entity.isEnabled());
         model.setSettings(entity.getSettings());
         return model;
     }

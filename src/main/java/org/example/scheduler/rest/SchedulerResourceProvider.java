@@ -23,9 +23,15 @@ import org.keycloak.timer.TimerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import static org.example.authenticator.utils.Constants.*;
 
 public class SchedulerResourceProvider implements RealmResourceProvider {
     private final KeycloakSession session;
@@ -50,16 +56,37 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @NoCache
-    public List<SchedulerProviderRepresentation> getSchedulers() {
+    public Response getSchedulers() {
         logger.info("registered-schedulers endpoint reached");
-        String realmName = realm.getName();
+
+        String realmId = realm.getId(); // Assuming realm ID is needed to filter
         List<SchedulerProviderRepresentation> list = new LinkedList<>();
-        schedulerServiceImpl
-                .getSchedulerProviders()
-                .stream()
-                .filter(x -> x.getRealmName().equalsIgnoreCase(realmName))
-                .forEach(x -> list.add(toRepresentation(x)));
-        return list;
+
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:/opt/keycloak/data/h2/keycloakdb;AUTO_SERVER=TRUE", "sa", "password");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM SCHEDULER_PROVIDER WHERE REALM_ID = '" + realmId + "'")) {
+
+            while (resultSet.next()) {
+                SchedulerProviderRepresentation rep = new SchedulerProviderRepresentation();
+                rep.setAlias(resultSet.getString("ALIAS"));
+                rep.setName(resultSet.getString("NAME"));
+                rep.setRealmId(resultSet.getString("REALM_ID"));
+                rep.setProviderId(resultSet.getString("PROVIDER_ID"));
+                rep.setInterval(resultSet.getInt("INTRVL"));
+                rep.setIntervalUnit(resultSet.getString("INTRVL_UNIT"));
+                rep.setEnabled(resultSet.getBoolean("ENABLED"));
+                rep.setSettings(resultSet.getString("SETTINGS"));
+
+                list.add(rep);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error fetching schedulers: ", e);
+        }
+
+        logger.info("Number of schedulers fetched: " + list.size());
+        return Response.ok(list).build();
+
     }
 
     @GET
@@ -81,7 +108,7 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
     @Tag(name = "Scheduler Management")
     @Operation(summary = "Register and run a new scheduler task")
     @APIResponse(responseCode = "204", description = "No Content")
-    public void registerScheduler(@Parameter(description = "JSON containing 'providerId', 'name', and 'interval' attributes.") Map<String, String> data) {
+    public Response registerScheduler(@Parameter(description = "JSON containing 'providerId', 'name', and 'interval' attributes.") Map<String, String> data) {
         logger.info("register scheduler endpoint reached");
         String providerId = data.get("providerId");
         String name = data.get("name");
@@ -119,18 +146,22 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
         schedulerProviderModel.setName(name);
         schedulerProviderModel.setProviderId(providerId);
         schedulerProviderModel.setInterval(interval);
+        schedulerProviderModel.setIntrvl_unit(intervalUnit);
         schedulerProviderModel.setEnabled(true);
         schedulerProviderModel.setRealmName(realmName);
 
         // Save the scheduler provider model
         schedulerProviderModel = schedulerServiceImpl.addSchedulerProvider(schedulerProviderModel);
         data.put("id", schedulerProviderModel.getId());
+        SchedulerProvider provider = session.getProvider(SchedulerProvider.class, providerId);
+        if (provider == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Provider not found").build();
+        }
 
-        // Schedule the task using TimerProvider
-        TimerProvider timerProvider = session.getProvider(TimerProvider.class);
-        timerProvider.scheduleTask(new RemoveInactiveUserTask(realmName), intervalMillis);
+        provider.run(session, realmName, intervalMillis, name);
 
-        logger.info("Scheduler task registered and scheduled successfully");
+        logger.info("Scheduler task {} registered and scheduled successfully", providerId);
+        return Response.status(Response.Status.OK).entity("Provider found and task registered").build();
     }
 
     @POST
@@ -141,20 +172,16 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
     public Response unregisterScheduler(@PathParam("realm") String realm, SchedulerProviderModel request) {
         logger.info("unregister scheduler endpoint reached");
         logger.info("request {}", request);
-        String name = request.getProviderId();
+        String providerId = request.getProviderId();
         String realmName = request.getRealmName();
+        String taskName = request.getName();
 
         try {
-            TimerProvider provider = session.getProvider(TimerProvider.class);
-            TimerProvider.TimerTaskContext context = provider.cancelTask(String.valueOf(new RemoveInactiveUserTask(realmName)));
-            if (context == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Scheduler task not found\"}")
-                        .type(MediaType.APPLICATION_JSON)
-                        .build();
-            }
+            SchedulerProvider provider = session.getProvider(SchedulerProvider.class, providerId);
+            provider.cancelTask(taskName);
+
             // Remove the scheduler provider from the database
-            SchedulerProviderModel model = schedulerServiceImpl.getSchedulerProviderByAliasAndRealm(name, realmName);
+            SchedulerProviderModel model = schedulerServiceImpl.getSchedulerProviderByAliasAndRealm(providerId, realmName);
             if (model != null) {
                 schedulerServiceImpl.removeSchedulerProvider(model, realmName);
                 return Response.ok().entity("{\"status\": \"success\"}").build();
@@ -172,6 +199,7 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
                     .build();
         }
     }
+
     public Stream<Map<String, Object>> buildProviderMetadata(Stream<ProviderFactory> factories) {
         return factories.map(factory -> {
             Map<String, Object> data = new HashMap<>();
@@ -181,15 +209,15 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
     }
 
     private void buildProviderMetadataHelper(Map<String, Object> data, ProviderFactory factory) {
-        data.put("id", factory.getId());
+        data.put("providerId", factory.getId());
         logger.info("Factory instance is {}", factory.getClass().getName());
         if (factory instanceof ConfigurableAuthenticatorFactory) {
             ConfigurableAuthenticatorFactory configured = (ConfigurableAuthenticatorFactory) factory;
-            data.put("description", configured.getHelpText());
-            data.put("displayName", configured.getDisplayType());
+            data.put(DESCRIPTION, configured.getHelpText());
+            data.put(DISPLAY_NAME, configured.getDisplayType());
         } else {
-            data.put("description", "N/A");
-            data.put("displayName", "N/A");
+            data.put(DESCRIPTION, "N/A");
+            data.put(DISPLAY_NAME, "N/A");
         }
         logger.info("Provider metadata: {}", data);
     }
@@ -205,9 +233,8 @@ public class SchedulerResourceProvider implements RealmResourceProvider {
     }
 
 
-
     @Override
     public void close() {
-
+//      do nothing
     }
 }

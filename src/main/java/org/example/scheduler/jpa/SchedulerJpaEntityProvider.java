@@ -8,8 +8,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class SchedulerJpaEntityProvider implements JpaEntityProvider {
+    private final String CHANGELOG = "META-INF/services/scheduler-provider-changelog-1.0.0.xml";
     private static final Logger logger = LoggerFactory.getLogger(SchedulerJpaEntityProvider.class);
-    public  SchedulerJpaEntityProvider(){
+
+    public SchedulerJpaEntityProvider() {
         logger.info("Scheduler JPA Entity Provider running");
     }
 
@@ -20,7 +22,7 @@ public class SchedulerJpaEntityProvider implements JpaEntityProvider {
 
     @Override
     public String getChangelogLocation() {
-        return "META-INF/services/scheduler-provider-changelog-1.0.0.xml";
+        return CHANGELOG;
     }
 
     @Override
@@ -30,6 +32,6 @@ public class SchedulerJpaEntityProvider implements JpaEntityProvider {
 
     @Override
     public void close() {
-
+//      do nothing
     }
 }

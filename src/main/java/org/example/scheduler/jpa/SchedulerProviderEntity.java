@@ -31,14 +31,11 @@ public class SchedulerProviderEntity {
     @Column(name = "INTRVL")
     protected int interval;
 
-    @Column(name = "CREATE_TIME")
-    protected long createTime;
+    @Column(name = "INTRVL_UNIT")
+    protected String intrvlUnit;
 
-    @Column(name = "LAST_RUN_TIME")
-    protected long lastRunTime;
-
-    @Column(name = "NEXT_RUN_TIME")
-    protected long nextRunTime;
+    @Column(name = "ENABLED")
+    protected boolean enabled;
 
     @Column(name = "SETTINGS")
     protected String settings;
@@ -49,6 +46,22 @@ public class SchedulerProviderEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getIntrvlUnit() {
+        return intrvlUnit;
+    }
+
+    public void setIntrvlUnit(String intrvlUnit) {
+        this.intrvlUnit = intrvlUnit;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getAlias() {
@@ -89,30 +102,6 @@ public class SchedulerProviderEntity {
 
     public void setInterval(int interval) {
         this.interval = interval;
-    }
-
-    public long getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(long createTime) {
-        this.createTime = createTime;
-    }
-
-    public long getLastRunTime() {
-        return lastRunTime;
-    }
-
-    public void setLastRunTime(long lastRunTime) {
-        this.lastRunTime = lastRunTime;
-    }
-
-    public long getNextRunTime() {
-        return nextRunTime;
-    }
-
-    public void setNextRunTime(long nextRunTime) {
-        this.nextRunTime = nextRunTime;
     }
 
     public String getSettings() {

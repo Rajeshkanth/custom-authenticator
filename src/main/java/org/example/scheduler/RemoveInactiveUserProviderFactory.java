@@ -10,7 +10,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BasicSchedulerProviderFactory implements SchedulerProviderFactory, ConfigurableAuthenticatorFactory {
+public class RemoveInactiveUserProviderFactory implements SchedulerProviderFactory, ConfigurableAuthenticatorFactory {
     private static final String PROVIDER_ID = "basic-scheduler";
     private static final String DISPLAY_TEXT = "REMOVE INACTIVE USER";
     private static final String HELP_TEXT = "It will remove all the users who are all inactive for specified period.";
@@ -23,7 +23,7 @@ public class BasicSchedulerProviderFactory implements SchedulerProviderFactory, 
     
     @Override
     public SchedulerProvider create(KeycloakSession session) {
-        return new BasicSchedulerProvider();
+        return new RemoveInactiveUser(session);
     }
 
     @Override

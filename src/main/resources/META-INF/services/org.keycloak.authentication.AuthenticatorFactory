@@ -1,4 +1,4 @@
-org.example.authenticator.login.MobileNumberAuthenticatorFactory
+org.example.authenticator.login.LoginAuthenticatorFactory
 org.example.authenticator.onboard.OnBoardingViaMobileFactory
 org.example.authenticator.sms.SMSAuthenticatorFactory
 org.example.authenticator.password.ResetCredentialAuthenticatorFactory

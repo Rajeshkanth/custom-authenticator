@@ -90,5 +90,10 @@ public class Constants {
     public static final String UPDATE_EXPIRED_PASSWORD = "Password expired, update password to continue!";
     public static final int MAXIMUM_INACTIVE_DAYS = 90;
     public static final String LAST_LOGIN = "lastLogin";
+    public static final String KC_JDBC_URL = System.getenv("KC_JDBC_URL");
+    public static final String KC_DB_USER = System.getenv("KC_DB_USER");
+    public static final String KC_DB_PSWD = System.getenv("KC_DB_PSWD");
+    public static final String DESCRIPTION = "description";
+    public static final String DISPLAY_NAME = "displayName";
 
 }

@@ -8,19 +8,25 @@ public class SchedulerProviderModel implements Serializable, Cloneable {
     private String name;
     private String providerId;
     private int interval;
+    private String intrvl_unit;
     private String realmName;
-    protected long createTime;
-    protected long lastRunTime;
-    protected long nextRunTime;
-    private boolean isEnabled;
+    private boolean enabled;
     protected String settings;
 
     public boolean isEnabled() {
-        return isEnabled;
+        return enabled;
     }
 
     public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
+        this.enabled = enabled;
+    }
+
+    public String getIntrvl_unit() {
+        return intrvl_unit;
+    }
+
+    public void setIntrvl_unit(String intrvl_unit) {
+        this.intrvl_unit = intrvl_unit;
     }
 
     public String getId() {
@@ -77,31 +83,6 @@ public class SchedulerProviderModel implements Serializable, Cloneable {
         this.realmName = realmName;
     }
 
-
-    public long getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(long createTime) {
-        this.createTime = createTime;
-    }
-
-    public long getLastRunTime() {
-        return lastRunTime;
-    }
-
-    public void setLastRunTime(long lastRunTime) {
-        this.lastRunTime = lastRunTime;
-    }
-
-    public long getNextRunTime() {
-        return nextRunTime;
-    }
-
-    public void setNextRunTime(long nextRunTime) {
-        this.nextRunTime = nextRunTime;
-    }
-
     public String getSettings() {
         return settings;
     }
@@ -119,16 +100,13 @@ public class SchedulerProviderModel implements Serializable, Cloneable {
                 ", providerId='" + providerId + '\'' +
                 ", interval=" + interval +
                 ", realmName='" + realmName + '\'' +
-                ", createTime=" + createTime +
-                ", lastRunTime=" + lastRunTime +
-                ", nextRunTime=" + nextRunTime +
                 ", settings='" + settings + '\'' +
+                ", enabled='" + enabled + '\'' +
                 '}';
     }
 
     public Object clone() throws
-            CloneNotSupportedException
-    {
+            CloneNotSupportedException {
         return super.clone();
     }
 }

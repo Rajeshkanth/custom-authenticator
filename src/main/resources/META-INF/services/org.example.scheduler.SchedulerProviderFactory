@@ -1,1 +1,1 @@
-org.example.scheduler.BasicSchedulerProviderFactory
+org.example.scheduler.RemoveInactiveUserProviderFactory

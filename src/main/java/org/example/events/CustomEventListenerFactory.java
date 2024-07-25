@@ -1,6 +1,10 @@
 package org.example.events;
 
 import org.example.scheduler.RemoveInactiveUserTask;
+import org.example.scheduler.SchedulerProvider;
+import org.example.scheduler.jpa.SchedulerProviderModel;
+import org.example.scheduler.jpa.SchedulerProviderRepresentation;
+import org.example.scheduler.service.impl.SchedulerServiceImpl;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -11,6 +15,9 @@ import org.keycloak.timer.TimerProvider;
 import org.keycloak.timer.TimerProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class CustomEventListenerFactory implements EventListenerProviderFactory {
@@ -31,13 +38,25 @@ public class CustomEventListenerFactory implements EventListenerProviderFactory 
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-//        factory.register(event -> {
-//            if (event instanceof PostMigrationEvent){
-//                KeycloakSession session = factory.create();
-//                TimerProviderFactory provider = (TimerProviderFactory) factory.getProviderFactory(TimerProvider.class);
-//                provider.create(session).scheduleTask(new RemoveInactiveUserTask(), 300000);
-//            }
-//        });
+        factory.register(event -> {
+            if (event instanceof PostMigrationEvent) {
+                try (KeycloakSession session = factory.create()) {
+                    SchedulerServiceImpl schedulerService = new SchedulerServiceImpl(session);
+                    List<SchedulerProviderModel> list = schedulerService.getSchedulerProviders();
+                    for (SchedulerProviderModel scheduler : list) {
+                        if (scheduler.isEnabled()) {
+                            SchedulerProvider provider = session.getProvider(SchedulerProvider.class, scheduler.getProviderId());
+                            if (provider != null) {
+                                provider.restoreTasks();
+                            } else {
+                                logger.warn("No provider found for ID: " + scheduler.getProviderId());
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
     }
 
     @Override

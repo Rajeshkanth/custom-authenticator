@@ -7,13 +7,11 @@ import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MobileNumberAuthenticatorFactory implements AuthenticatorFactory {
+public class LoginAuthenticatorFactory implements AuthenticatorFactory {
 
     private static final String PROVIDER_ID = "mobile-authenticator";
     private static final String DISPLAY_TEXT = "Login Form";
@@ -21,7 +19,7 @@ public class MobileNumberAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public Authenticator create(KeycloakSession session) {
-        return new MobileNumberAuthenticator();
+        return new LoginAuthenticator();
     }
 
     @Override

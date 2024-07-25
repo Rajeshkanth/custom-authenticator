@@ -26,11 +26,27 @@ public class SchedulerProviderRepresentation {
     private String name;
     private String providerId;
     private int interval;
+    private String intervalUnit;
+    private boolean isEnabled;
     private String realmName;
-    protected long createTime;
-    protected long lastRunTime;
-    protected long nextRunTime;
     private String settings;
+    private String realmId;
+
+    public String getIntervalUnit() {
+        return intervalUnit;
+    }
+
+    public void setIntervalUnit(String intervalUnit) {
+        this.intervalUnit = intervalUnit;
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        isEnabled = enabled;
+    }
 
     public String getAlias() {
         return alias;
@@ -72,30 +88,6 @@ public class SchedulerProviderRepresentation {
         this.realmName = realmName;
     }
 
-    public long getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(long createTime) {
-        this.createTime = createTime;
-    }
-
-    public long getLastRunTime() {
-        return lastRunTime;
-    }
-
-    public void setLastRunTime(long lastRunTime) {
-        this.lastRunTime = lastRunTime;
-    }
-
-    public long getNextRunTime() {
-        return nextRunTime;
-    }
-
-    public void setNextRunTime(long nextRunTime) {
-        this.nextRunTime = nextRunTime;
-    }
-
     public String getSettings() {
         return settings;
     }
@@ -104,4 +96,10 @@ public class SchedulerProviderRepresentation {
         this.settings = settings;
     }
 
+    public void setRealmId(String realmId) {
+        this.realmId = realmId;
+    }
+    public  String getRealmId(){
+       return realmId;
+    }
 }

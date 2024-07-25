@@ -18,8 +18,8 @@ import static org.example.authenticator.utils.Constants.*;
 import static org.example.authenticator.utils.FailureChallenge.showError;
 import static org.example.authenticator.utils.FindUser.findUser;
 
-public class MobileNumberAuthenticator implements Authenticator {
-    private static final Logger logger = LoggerFactory.getLogger(MobileNumberAuthenticator.class);
+public class LoginAuthenticator implements Authenticator {
+    private static final Logger logger = LoggerFactory.getLogger(LoginAuthenticator.class);
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {

@@ -42,6 +42,5 @@ public class RemoveInactiveUserTask implements ScheduledTask {
                 }
             }
         });
-
     }
 }

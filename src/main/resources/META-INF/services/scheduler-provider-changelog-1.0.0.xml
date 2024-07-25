@@ -1,4 +1,6 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet author="Easy Trasnfer" id="scheduler-provider-1.0.0">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -15,9 +17,8 @@
             <column name="REALM_ID" type="VARCHAR(250)"/>
             <column name="PROVIDER_ID" type="VARCHAR(250)"/>
             <column name="INTRVL" type="INT"/>
-            <column name="CREATE_TIME" type="BIGINT"/>
-            <column name="LAST_RUN_TIME" type="BIGINT"/>
-            <column name="NEXT_RUN_TIME" type="BIGINT"/>
+            <column name="INTRVL_UNIT" type="VARCHAR(250)"/>
+            <column name="ENABLED" type="BOOLEAN"/>
             <column name="SETTINGS" type="VARCHAR(250)"/>
         </createTable>
         <addPrimaryKey

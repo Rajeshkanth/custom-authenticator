@@ -20,17 +20,17 @@ public class SchedulerJpaEntityProviderFactory implements JpaEntityProviderFacto
 
     @Override
     public void init(Config.Scope config) {
-
+//      do nothing
     }
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-
+//      do nothing
     }
 
     @Override
     public void close() {
-
+//      do nothing
     }
 
     @Override
